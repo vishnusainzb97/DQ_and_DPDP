@@ -1,38 +1,23 @@
 'use client';
-import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import { useDQContext } from '../context/DQContext';
 
 export default function RulesPage() {
-  const [selectedTable, setSelectedTable] = useState('banking_transactions');
-  const [generating, setGenerating] = useState(false);
-  const [rules, setRules] = useState(null);
+  const { analysisResult } = useDQContext();
 
-  const predefinedRules = {
-    banking_transactions: [
-      { title: 'Completeness — Account Number', desc: 'Every transaction row must have a non-null, non-empty account_number. Reject ingestion if >1% rows violate this constraint.' },
-      { title: 'Validity — SSN Format Check', desc: 'SSN column must match regex pattern XXX-XX-XXXX before DPDP masking is applied. Invalid formats trigger a quarantine workflow.' },
-      { title: 'Accuracy — Transaction Amount Range', desc: 'transaction_amount must fall between ₹1 and ₹50,00,000. Values outside this range are flagged for manual review.' },
-      { title: 'Consistency — Status Enumeration', desc: 'The status column must only contain values from the set {APPROVED, PENDING, FAILED}. Any "NULL" string literal should be converted to actual NULL and flagged.' },
-      { title: 'Uniqueness — Duplicate Detection', desc: 'No two rows should share the same (account_number, transaction_amount, status) combination within a 24hr window.' },
-      { title: 'Timeliness — Ingestion SLA', desc: 'Records must be ingested within 15 minutes of source system generation timestamp. Violations trigger an alert to the Data Steward.' },
-    ],
-    patient_ehr: [
-      { title: 'Completeness — Patient ID', desc: 'patient_id is a mandatory primary identifier. Null values must be rejected at the ingestion layer with error code DQ-COMP-001.' },
-      { title: 'Validity — Date of Birth Format', desc: 'dob must conform to ISO 8601 (YYYY-MM-DD) and represent a valid calendar date. Future dates are automatically rejected.' },
-      { title: 'Accuracy — Diagnosis Code Lookup', desc: 'diagnosis_code must exist in the ICD-10 master reference table. Unmatched codes are quarantined for clinical review.' },
-      { title: 'Consistency — Blood Type Values', desc: 'blood_type must be one of {O+, O-, A+, A-, B+, B-, AB+, AB-}. Standardize any variant spellings before storage.' },
-      { title: 'Uniqueness — Patient Deduplication', desc: 'Flag potential duplicates where patient_name similarity > 85% AND dob matches. Route to manual merge workflow.' },
-      { title: 'Timeliness — EHR Sync Freshness', desc: 'Patient records older than 90 days without update must be flagged as "Stale" and excluded from active analytics pipelines.' },
-    ]
-  };
-
-  const handleGenerate = () => {
-    setGenerating(true);
-    setRules(null);
-    setTimeout(() => {
-      setRules(predefinedRules[selectedTable]);
-      setGenerating(false);
-    }, 2200);
+  const parseLLMRules = (text) => {
+    // Simple parser if the text is markdown
+    return text.split('\n').map((line, i) => {
+      line = line.trim();
+      if (line.startsWith('**') || line.match(/^[0-9]+\./) || line.startsWith('###')) {
+        return <h4 key={i} style={{ marginTop: 16, color: 'var(--primary-300)' }}>{line.replace(/\*/g, '').replace('###', '')}</h4>;
+      } else if (line.startsWith('-') || line.startsWith('*')) {
+        return <li key={i} style={{ marginLeft: 20, marginBottom: 8 }}>{line.replace(/^[-*]/, '').replace(/\*\*/g, '')}</li>;
+      } else if (line !== '') {
+        return <p key={i} style={{ marginBottom: 12 }}>{line.replace(/\*\*/g, '')}</p>;
+      }
+      return null;
+    });
   };
 
   return (
@@ -50,35 +35,6 @@ export default function RulesPage() {
           </span>
         </header>
 
-        {/* Controls */}
-        <div className="panel" style={{ marginBottom: 24 }}>
-          <div style={{ padding: 24, display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <label className="form-label">Select Source Table</label>
-              <select
-                className="form-input"
-                value={selectedTable}
-                onChange={(e) => { setSelectedTable(e.target.value); setRules(null); }}
-              >
-                <option value="banking_transactions">🏦 banking_transactions</option>
-                <option value="patient_ehr">🏥 patient_ehr</option>
-              </select>
-            </div>
-            <button
-              className="btn btn-primary"
-              onClick={handleGenerate}
-              disabled={generating}
-              style={{ height: 46, whiteSpace: 'nowrap' }}
-            >
-              {generating ? (
-                <><span className="loading-spinner"></span> Generating...</>
-              ) : (
-                <>🤖 Generate DQ Rules</>
-              )}
-            </button>
-          </div>
-        </div>
-
         {/* Privacy Notice */}
         <div className="panel" style={{ padding: '14px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: '1.1rem' }}>🔒</span>
@@ -87,40 +43,23 @@ export default function RulesPage() {
           </p>
         </div>
 
-        {/* Generated Rules */}
-        {rules && (
-          <div className="panel">
-            <div className="panel-header">
-              <h2>Proposed Business Rules for <code style={{ color: 'var(--primary-300)', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: 4, fontSize: '0.9rem' }}>{selectedTable}</code></h2>
-              <span className="badge badge-primary">AI Generated</span>
-            </div>
-            <div className="rules-list">
-              {rules.map((rule, i) => (
-                <div className="rule-item" key={i}>
-                  <div className="rule-number">{i + 1}</div>
-                  <div className="rule-content">
-                    <h4>{rule.title}</h4>
-                    <p>{rule.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {!rules && !generating && (
+        {!analysisResult ? (
           <div style={{ textAlign: 'center', padding: '80px 20px' }}>
             <div style={{ fontSize: '3rem', marginBottom: 16 }}>🤖</div>
-            <h2 style={{ color: 'var(--slate-300)', marginBottom: 8 }}>Ready to Generate</h2>
-            <p>Select a table and click "Generate DQ Rules" to invoke the local Gemma LLM.</p>
+            <h2 style={{ color: 'var(--slate-300)', marginBottom: 8 }}>Ready for AI Analysis</h2>
+            <p>Upload a dataset on the Dashboard to invoke the local Gemma LLM.</p>
           </div>
-        )}
-
-        {generating && (
-          <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-            <div className="loading-spinner" style={{ width: 40, height: 40, borderWidth: 3, marginBottom: 20 }}></div>
-            <h2 style={{ color: 'var(--slate-300)', marginBottom: 8 }}>Analyzing Schema with Gemma 4...</h2>
-            <p>Feeding column metadata to local LLM — no PII data is transmitted.</p>
+        ) : (
+          <div className="panel">
+            <div className="panel-header">
+              <h2>Proposed Business Rules for <code style={{ color: 'var(--primary-300)', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: 4, fontSize: '0.9rem' }}>{analysisResult.filename}</code></h2>
+              <span className="badge badge-primary">AI Generated</span>
+            </div>
+            <div className="rules-list" style={{ padding: 24 }}>
+              <div style={{ lineHeight: '1.6', color: 'var(--slate-200)', background: 'rgba(0,0,0,0.2)', padding: 24, borderRadius: 12, border: '1px solid var(--slate-700)' }}>
+                {parseLLMRules(analysisResult.llm_rules)}
+              </div>
+            </div>
           </div>
         )}
       </main>

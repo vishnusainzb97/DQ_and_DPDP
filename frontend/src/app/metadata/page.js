@@ -1,41 +1,106 @@
 'use client';
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
+import { useDQContext } from '../context/DQContext';
 
 export default function MetadataPage() {
   const [activeTab, setActiveTab] = useState('schema');
+  const { analysisResult } = useDQContext();
 
-  const bankingSchema = [
-    { name: 'id', type: 'INTEGER', pii: false },
-    { name: 'account_number', type: 'VARCHAR', pii: false },
-    { name: 'customer_name', type: 'VARCHAR', pii: true },
-    { name: 'ssn', type: 'VARCHAR', pii: true },
-    { name: 'transaction_amount', type: 'INTEGER', pii: false },
-    { name: 'status', type: 'VARCHAR', pii: false },
-    { name: 'is_flagged', type: 'BOOLEAN', pii: false },
-  ];
+  const renderContent = () => {
+    if (!analysisResult) {
+      return (
+        <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 16 }}>📊</div>
+          <h2 style={{ color: 'var(--slate-300)', marginBottom: 8 }}>No Data Loaded</h2>
+          <p>Please upload a dataset on the Dashboard to view its schema and masked preview.</p>
+        </div>
+      );
+    }
 
-  const healthSchema = [
-    { name: 'id', type: 'INTEGER', pii: false },
-    { name: 'patient_id', type: 'VARCHAR', pii: false },
-    { name: 'patient_name', type: 'VARCHAR', pii: true },
-    { name: 'dob', type: 'VARCHAR', pii: true },
-    { name: 'diagnosis_code', type: 'VARCHAR', pii: false },
-    { name: 'blood_type', type: 'VARCHAR', pii: false },
-    { name: 'bill_amount', type: 'INTEGER', pii: false },
-  ];
+    if (activeTab === 'schema') {
+      return (
+        <>
+          <div style={{ marginBottom: 20 }}>
+            <div className="panel" style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: '1.1rem' }}>🔒</span>
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--slate-400)' }}>
+                <strong style={{ color: 'var(--amber-400)' }}>Privacy First:</strong> Only metadata schema is extracted — no actual data is read, transferred, or stored. Fully DPDP Act compliant.
+              </p>
+            </div>
+          </div>
+          <div className="schema-grid">
+            <div className="schema-block" style={{ gridColumn: 'span 2' }}>
+              <div className="schema-block-header">
+                <div className="schema-icon" style={{ background: 'rgba(99,102,241,0.15)' }}>📄</div>
+                <div>
+                  <h3>{analysisResult.filename}</h3>
+                  <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--slate-500)' }}>{analysisResult.columns} columns · {analysisResult.rows} rows</p>
+                </div>
+              </div>
+              <div className="column-list">
+                {analysisResult.schema.map((col, i) => {
+                  const isPii = analysisResult.pii_columns && analysisResult.pii_columns[col.column_name];
+                  return (
+                    <div className="column-item" key={i}>
+                      <span className="column-name">{col.column_name}</span>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        {isPii && (
+                          <span className="column-pii" title={analysisResult.pii_columns[col.column_name].reason}>
+                            🔴 PII ({analysisResult.pii_columns[col.column_name].pattern_match || 'Keyword Match'})
+                          </span>
+                        )}
+                        <span className="column-type">{col.dtype}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      );
+    }
 
-  const maskedBanking = [
-    { id: 1, account_number: 'ACT-4821', customer_name: 'C***', ssn: '***-**-****', transaction_amount: 2340, status: 'APPROVED' },
-    { id: 2, account_number: 'ACT-7193', customer_name: 'C***', ssn: '***-**-****', transaction_amount: 890, status: 'PENDING' },
-    { id: 3, account_number: 'ACT-3562', customer_name: 'C***', ssn: '***-**-****', transaction_amount: 4510, status: 'APPROVED' },
-  ];
-
-  const maskedHealth = [
-    { id: 1, patient_id: 'PT-482', patient_name: 'P***', dob: '****-**-** (MASKED)', diagnosis_code: 'A01', blood_type: 'O+', bill_amount: 12500 },
-    { id: 2, patient_id: 'PT-713', patient_name: 'P***', dob: '****-**-** (MASKED)', diagnosis_code: 'B02', blood_type: 'A-', bill_amount: 8900 },
-    { id: 3, patient_id: 'PT-256', patient_name: 'P***', dob: '****-**-** (MASKED)', diagnosis_code: 'C03', blood_type: 'B+', bill_amount: 15600 },
-  ];
+    if (activeTab === 'masked') {
+      if (!analysisResult.masked_preview || analysisResult.masked_preview.length === 0) {
+        return <div>No preview available</div>;
+      }
+      const headers = Object.keys(analysisResult.masked_preview[0]);
+      
+      return (
+        <div className="panel" style={{ marginBottom: 24, overflowX: 'auto' }}>
+          <div className="panel-header">
+            <h2>Masked Preview: {analysisResult.filename}</h2>
+            <span className="badge badge-success">DPDP Compliant</span>
+          </div>
+          <div className="panel-body">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  {headers.map(h => <th key={h}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {analysisResult.masked_preview.map((row, i) => (
+                  <tr key={i}>
+                    {headers.map(h => {
+                      const isPii = analysisResult.pii_columns && analysisResult.pii_columns[h];
+                      return (
+                        <td key={h} className={isPii ? 'masked-cell' : ''}>
+                          {row[h] !== null ? String(row[h]) : 'NULL'}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="app-layout">
@@ -62,124 +127,8 @@ export default function MetadataPage() {
           </div>
         </header>
 
-        {activeTab === 'schema' && (
-          <>
-            <div style={{ marginBottom: 20 }}>
-              <div className="panel" style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.1rem' }}>🔒</span>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--slate-400)' }}>
-                  <strong style={{ color: 'var(--amber-400)' }}>Privacy First:</strong> Only metadata schema is extracted — no actual data is read, transferred, or stored. Fully DPDP Act compliant.
-                </p>
-              </div>
-            </div>
-            <div className="schema-grid">
-              {/* Banking Schema */}
-              <div className="schema-block">
-                <div className="schema-block-header">
-                  <div className="schema-icon" style={{ background: 'rgba(99,102,241,0.15)' }}>🏦</div>
-                  <div>
-                    <h3>banking_transactions</h3>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--slate-500)' }}>7 columns · 10 rows</p>
-                  </div>
-                </div>
-                <div className="column-list">
-                  {bankingSchema.map((col, i) => (
-                    <div className="column-item" key={i}>
-                      <span className="column-name">{col.name}</span>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {col.pii && <span className="column-pii">🔴 PII</span>}
-                        <span className="column-type">{col.type}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+        {renderContent()}
 
-              {/* Health Schema */}
-              <div className="schema-block">
-                <div className="schema-block-header">
-                  <div className="schema-icon" style={{ background: 'rgba(16,185,129,0.15)' }}>🏥</div>
-                  <div>
-                    <h3>patient_ehr</h3>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--slate-500)' }}>7 columns · 10 rows</p>
-                  </div>
-                </div>
-                <div className="column-list">
-                  {healthSchema.map((col, i) => (
-                    <div className="column-item" key={i}>
-                      <span className="column-name">{col.name}</span>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {col.pii && <span className="column-pii">🔴 PII</span>}
-                        <span className="column-type">{col.type}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === 'masked' && (
-          <>
-            <div className="panel" style={{ marginBottom: 24 }}>
-              <div className="panel-header">
-                <h2>🏦 Banking Transactions — Masked Preview</h2>
-                <span className="badge badge-success">DPDP Compliant</span>
-              </div>
-              <div className="panel-body">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th><th>Account</th><th>Customer Name</th><th>SSN</th><th>Amount</th><th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {maskedBanking.map((row, i) => (
-                      <tr key={i}>
-                        <td>{row.id}</td>
-                        <td>{row.account_number}</td>
-                        <td className="masked-cell">{row.customer_name}</td>
-                        <td className="masked-cell">{row.ssn}</td>
-                        <td>₹{row.transaction_amount.toLocaleString()}</td>
-                        <td><span className={`badge ${row.status === 'APPROVED' ? 'badge-success' : 'badge-warning'}`}>{row.status}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="panel">
-              <div className="panel-header">
-                <h2>🏥 Patient EHR — Masked Preview</h2>
-                <span className="badge badge-success">DPDP Compliant</span>
-              </div>
-              <div className="panel-body">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th><th>Patient ID</th><th>Name</th><th>DOB</th><th>Diagnosis</th><th>Blood</th><th>Bill</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {maskedHealth.map((row, i) => (
-                      <tr key={i}>
-                        <td>{row.id}</td>
-                        <td>{row.patient_id}</td>
-                        <td className="masked-cell">{row.patient_name}</td>
-                        <td className="masked-cell">{row.dob}</td>
-                        <td>{row.diagnosis_code}</td>
-                        <td>{row.blood_type}</td>
-                        <td>₹{row.bill_amount.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )}
       </main>
     </div>
   );

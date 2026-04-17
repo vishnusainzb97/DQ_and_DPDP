@@ -10,6 +10,7 @@ export default function Sidebar() {
     { href: '/metadata', icon: '🗄️', label: 'Schema & Masking' },
     { href: '/rules', icon: '🤖', label: 'AI Rules Engine' },
     { href: '/dq-metrics', icon: '📈', label: 'DQ Dimensions' },
+    { href: '/clean-export', icon: '🧹', label: 'Clean & Export' },
   ];
 
   return (

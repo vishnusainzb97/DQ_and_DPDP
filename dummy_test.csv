@@ -1,0 +1,7 @@
+id,name,email,phone,ssn,salary,purchase_date,status
+1,John Doe,john@example.com,555-1234,123-45-6789,50000,2023-01-15,Active
+2,Jane Smith,jane.smith@email.com,(555) 555-5555,987-65-4321,75000,2023-02-20,Inactive
+3,Bob,bob@invalid,123,000-00-0000,-100,2024-01-01,Active
+4,Alice Jones,alice@company.com,555-9876,111-22-3333,NULL,N/A,Pending
+5,Duplicate,dup@test.com,555-0000,555-55-5555,60000,2023-05-10,Active
+5,Duplicate,dup@test.com,555-0000,555-55-5555,60000,2023-05-10,Active
