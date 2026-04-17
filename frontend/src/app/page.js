@@ -1,65 +1,89 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Home() {
+  const [loading, setLoading] = useState(false);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="dashboard-layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div style={{ marginBottom: 40 }}>
+          <h2 className="text-gradient" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>DataGuard</h2>
+          <p style={{ fontSize: '0.8rem' }}>Enterprise DQ & DPDP</p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        <nav>
+          <Link href="/" className="nav-link active">
+            <span style={{ marginRight: 10 }}>📊</span> Dashboard
+          </Link>
+          <Link href="/metadata" className="nav-link">
+            <span style={{ marginRight: 10 }}>🗃️</span> Schema & Masking
+          </Link>
+          <Link href="/rules" className="nav-link">
+            <span style={{ marginRight: 10 }}>🤖</span> DQ Rules (Gemma AI)
+          </Link>
+          <Link href="/login" className="nav-link" style={{ marginTop: 'auto', display: 'flex', position: 'absolute', bottom: 20, width: 'calc(100% - 48px)' }}>
+            <span style={{ marginRight: 10 }}>👤</span> Identity / RBAC
+          </Link>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        <header className="top-nav">
+          <div>
+            <h1>Overview</h1>
+            <p>6 Dimensions of Data Quality Engine</p>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <span className="badge badge-warning">Local LLM Active</span>
+            <span className="badge badge-primary">Admin Role</span>
+          </div>
+        </header>
+
+        <section className="stats-grid">
+          <div className="glass-card">
+            <h3>Completeness</h3>
+            <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>98.2%</div>
+            <p style={{ fontSize: '0.85rem', marginTop: 10 }}>Health records dataset</p>
+          </div>
+          <div className="glass-card">
+            <h3>Validity</h3>
+            <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>94.5%</div>
+            <p style={{ fontSize: '0.85rem', marginTop: 10 }}>PII Regex compliance</p>
+          </div>
+          <div className="glass-card">
+            <h3>Accuracy</h3>
+            <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>99.1%</div>
+            <p style={{ fontSize: '0.85rem', marginTop: 10 }}>Matches source banking DB</p>
+          </div>
+        </section>
+
+        <section>
+          <h2>Workflow Automation Status</h2>
+          <div className="glass-panel" style={{ marginTop: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 15 }}>
+              <div><strong>Job ID</strong></div>
+              <div><strong>Dataset</strong></div>
+              <div><strong>Masking Rule</strong></div>
+              <div><strong>Status</strong></div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15 }}>
+              <div>#DQ-8812</div>
+              <div>Banking Transactions</div>
+              <div><span className="badge badge-primary">DPDP Masked</span></div>
+              <div style={{ color: 'var(--success)' }}>Complete</div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div>#DQ-8813</div>
+              <div>Patient EHR</div>
+              <div><span className="badge badge-primary">DPDP Masked</span></div>
+              <div style={{ color: 'var(--success)' }}>Complete</div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
