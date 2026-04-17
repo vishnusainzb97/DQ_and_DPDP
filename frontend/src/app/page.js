@@ -1,87 +1,97 @@
 'use client';
-import { useState } from 'react';
-import Link from 'next/link';
+import Sidebar from './components/Sidebar';
 
 export default function Home() {
-  const [loading, setLoading] = useState(false);
+  const metrics = [
+    { label: 'Completeness', value: '98.2%', change: '+1.3%', positive: true, target: 'Target: 99%', icon: '✅', iconClass: 'metric-icon-green', barClass: 'bar-green', width: '98.2%' },
+    { label: 'Validity', value: '94.5%', change: '+2.1%', positive: true, target: 'Target: 98%', icon: '🔍', iconClass: 'metric-icon-purple', barClass: 'bar-purple', width: '94.5%' },
+    { label: 'Accuracy', value: '99.1%', change: '+0.5%', positive: true, target: 'Target: 99.5%', icon: '🎯', iconClass: 'metric-icon-amber', barClass: 'bar-amber', width: '99.1%' },
+    { label: 'Consistency', value: '97.2%', change: '-0.3%', positive: false, target: 'Target: 98%', icon: '🔗', iconClass: 'metric-icon-cyan', barClass: 'bar-cyan', width: '97.2%' },
+    { label: 'Timeliness', value: '100%', change: '+0.0%', positive: true, target: 'Target: 100%', icon: '⏱️', iconClass: 'metric-icon-violet', barClass: 'bar-violet', width: '100%' },
+    { label: 'Uniqueness', value: '96.8%', change: '+1.7%', positive: true, target: 'Target: 99%', icon: '🔑', iconClass: 'metric-icon-rose', barClass: 'bar-rose', width: '96.8%' },
+  ];
+
+  const jobs = [
+    { id: '#DQ-8812', dataset: 'Banking Transactions', records: '12,450', masking: 'DPDP Masked', status: 'complete', time: '2 min ago' },
+    { id: '#DQ-8813', dataset: 'Patient EHR Records', records: '8,230', masking: 'DPDP Masked', status: 'complete', time: '5 min ago' },
+    { id: '#DQ-8814', dataset: 'Loan Applications', records: '3,102', masking: 'Processing', status: 'processing', time: 'In progress' },
+    { id: '#DQ-8815', dataset: 'Insurance Claims', records: '6,780', masking: 'Queued', status: 'processing', time: 'Pending' },
+  ];
 
   return (
-    <div className="dashboard-layout">
-      {/* Sidebar */}
-      <aside className="sidebar">
-        <div style={{ marginBottom: 40 }}>
-          <h2 className="text-gradient" style={{ fontSize: '1.5rem', marginBottom: '0.2rem' }}>DataGuard</h2>
-          <p style={{ fontSize: '0.8rem' }}>Enterprise DQ & DPDP</p>
-        </div>
-        <nav>
-          <Link href="/" className="nav-link active">
-            <span style={{ marginRight: 10 }}>📊</span> Dashboard
-          </Link>
-          <Link href="/metadata" className="nav-link">
-            <span style={{ marginRight: 10 }}>🗃️</span> Schema & Masking
-          </Link>
-          <Link href="/rules" className="nav-link">
-            <span style={{ marginRight: 10 }}>🤖</span> DQ Rules (Gemma AI)
-          </Link>
-          <Link href="/login" className="nav-link" style={{ marginTop: 'auto', display: 'flex', position: 'absolute', bottom: 20, width: 'calc(100% - 48px)' }}>
-            <span style={{ marginRight: 10 }}>👤</span> Identity / RBAC
-          </Link>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
+    <div className="app-layout">
+      <Sidebar />
       <main className="main-content">
-        <header className="top-nav">
+        <header className="top-bar">
           <div>
-            <h1>Overview</h1>
-            <p>6 Dimensions of Data Quality Engine</p>
+            <h1>Dashboard</h1>
+            <p>Real-time data quality monitoring across 6 dimensions</p>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span className="badge badge-warning">Local LLM Active</span>
+          <div className="top-bar-actions">
+            <span className="badge badge-success">
+              <span className="badge-dot"></span>
+              Gemma LLM Online
+            </span>
             <span className="badge badge-primary">Admin Role</span>
           </div>
         </header>
 
-        <section className="stats-grid">
-          <div className="glass-card">
-            <h3>Completeness</h3>
-            <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>98.2%</div>
-            <p style={{ fontSize: '0.85rem', marginTop: 10 }}>Health records dataset</p>
-          </div>
-          <div className="glass-card">
-            <h3>Validity</h3>
-            <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>94.5%</div>
-            <p style={{ fontSize: '0.85rem', marginTop: 10 }}>PII Regex compliance</p>
-          </div>
-          <div className="glass-card">
-            <h3>Accuracy</h3>
-            <div className="text-gradient" style={{ fontSize: '2rem', fontWeight: 'bold' }}>99.1%</div>
-            <p style={{ fontSize: '0.85rem', marginTop: 10 }}>Matches source banking DB</p>
-          </div>
+        {/* 6 DQ Dimension Cards */}
+        <section className="metrics-grid">
+          {metrics.map((m, i) => (
+            <div className="metric-card" key={i}>
+              <div className="metric-header">
+                <h3>{m.label}</h3>
+                <div className={`metric-icon ${m.iconClass}`}>{m.icon}</div>
+              </div>
+              <div className="metric-value text-gradient">{m.value}</div>
+              <div className="metric-bar">
+                <div className={`metric-bar-fill ${m.barClass}`} style={{ width: m.width }}></div>
+              </div>
+              <div className="metric-footer">
+                <span className={`metric-change ${m.positive ? 'positive' : 'negative'}`}>
+                  {m.positive ? '↑' : '↓'} {m.change}
+                </span>
+                <span className="metric-target">{m.target}</span>
+              </div>
+            </div>
+          ))}
         </section>
 
-        <section>
-          <h2>Workflow Automation Status</h2>
-          <div className="glass-panel" style={{ marginTop: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 15 }}>
-              <div><strong>Job ID</strong></div>
-              <div><strong>Dataset</strong></div>
-              <div><strong>Masking Rule</strong></div>
-              <div><strong>Status</strong></div>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 15 }}>
-              <div>#DQ-8812</div>
-              <div>Banking Transactions</div>
-              <div><span className="badge badge-primary">DPDP Masked</span></div>
-              <div style={{ color: 'var(--success)' }}>Complete</div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div>#DQ-8813</div>
-              <div>Patient EHR</div>
-              <div><span className="badge badge-primary">DPDP Masked</span></div>
-              <div style={{ color: 'var(--success)' }}>Complete</div>
-            </div>
+        {/* Workflow Jobs Table */}
+        <section className="panel">
+          <div className="panel-header">
+            <h2>Workflow Automation Pipeline</h2>
+            <button className="btn btn-ghost">View All Jobs</button>
+          </div>
+          <div className="panel-body">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Dataset</th>
+                  <th>Records</th>
+                  <th>Masking</th>
+                  <th>Status</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs.map((job, i) => (
+                  <tr key={i}>
+                    <td style={{ fontWeight: 600, color: 'var(--primary-300)' }}>{job.id}</td>
+                    <td>{job.dataset}</td>
+                    <td>{job.records}</td>
+                    <td><span className={`badge ${job.masking === 'DPDP Masked' ? 'badge-success' : 'badge-warning'}`}>{job.masking}</span></td>
+                    <td>
+                      <span className={`status-dot ${job.status}`}></span>
+                      {job.status === 'complete' ? 'Complete' : 'Processing'}
+                    </td>
+                    <td style={{ color: 'var(--slate-500)', fontSize: '0.82rem' }}>{job.time}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </main>

@@ -4,34 +4,57 @@ import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const router = useRouter();
+  const [role, setRole] = useState('admin');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      router.push('/');
+    }, 1200);
+  };
 
   return (
     <div className="auth-container">
-      <div className="glass-panel" style={{ maxWidth: 400, width: '100%' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 30 }} className="text-gradient">Platform Login</h2>
-        
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>Email / Username</label>
-          <input type="text" className="glass-input" defaultValue="admin@enterprise.com" />
+      <div className="auth-card">
+        <h1 className="text-gradient">DataGuard</h1>
+        <p>Enterprise Identity & Access Control</p>
+
+        <div className="form-group">
+          <label className="form-label">Email Address</label>
+          <input type="email" className="form-input" defaultValue="admin@enterprise.com" />
         </div>
 
-        <div style={{ marginBottom: 30 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>Password</label>
-          <input type="password" className="glass-input" defaultValue="password123" />
+        <div className="form-group">
+          <label className="form-label">Password</label>
+          <input type="password" className="form-input" defaultValue="••••••••••" />
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem' }}>Select Role (RBAC Demo)</label>
-          <select className="glass-input" style={{ appearance: 'none' }}>
-            <option value="admin">Data Admin</option>
-            <option value="steward">Data Steward</option>
-            <option value="viewer">Business Viewer</option>
+        <div className="form-group">
+          <label className="form-label">Access Role (RBAC)</label>
+          <select className="form-input" value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="admin">🛡️  Data Admin — Full Access</option>
+            <option value="steward">📋  Data Steward — Edit Rules & Masking</option>
+            <option value="viewer">👁️  Business Viewer — Read Only</option>
           </select>
         </div>
 
-        <button className="glass-button" onClick={() => router.push('/')}>
-          Authenticate Request
+        <button className="btn-auth" onClick={handleLogin} disabled={loading}>
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <span className="loading-spinner"></span>
+              Authenticating...
+            </span>
+          ) : (
+            'Sign In Securely'
+          )}
         </button>
+
+        <div className="auth-divider">RBAC DEMO MODE</div>
+        <p style={{ textAlign: 'center', fontSize: '0.78rem', color: 'var(--slate-500)' }}>
+          Select any role above to experience different permission levels across the platform.
+        </p>
       </div>
     </div>
   );
